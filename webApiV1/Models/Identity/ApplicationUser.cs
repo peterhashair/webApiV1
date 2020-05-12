@@ -1,19 +1,15 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
+using AspNetCore.Identity.MongoDbCore.Models;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDbGenericRepository.Attributes;
 
-namespace webApiV1.Models
+namespace webApiV1.Models.Identity
 {
-    public class User
-    {
+    [CollectionName("Users")]
+    public class ApplicationUser : MongoIdentityUser<Guid>
+	{
 
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
-
-        [BsonElement("Email")]
-        [Required]
-        public string Email { get; set; }
 
         [BsonElement("FirstName")]
         [Required]
@@ -23,9 +19,6 @@ namespace webApiV1.Models
         [Required]
         public string LastName { get; set; }
 
-        [BsonElement("Password")]
-        [Required]
-        public string Password { get; set; }
 
         [BsonElement("Phone")]
         [Required]
@@ -34,5 +27,12 @@ namespace webApiV1.Models
         [BsonElement("IsAcitve")]
         [BsonDefaultValue(false)]
         public bool IsAcitve { get; set; }
-    }
+        public ApplicationUser() : base()
+		{
+		}
+
+		public ApplicationUser(string userName, string email) : base(userName, email)
+		{
+		}
+	}
 }
