@@ -11,14 +11,25 @@ namespace webApiV1.Helpers
 {
     public static class AuthenticationHelper
     {
-        public static string GenerateJwtToken(string email, ApplicationUser user, IConfiguration configuration)
+        public static string GenerateJwtToken(string email, ApplicationUser user, IList<string> roles, IConfiguration configuration)
         {
+
+
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
+
+            if (roles.Count > 0)
+            {
+                foreach (string role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
+            }
+
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtKey"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

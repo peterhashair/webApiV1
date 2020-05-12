@@ -24,20 +24,24 @@ namespace webApiV1.Controllers
 
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IConfiguration _configuration;
 
-        public UserController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+        public UserController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _roleManager = roleManager;
         }
 
 
         [HttpGet]
+        [Authorize(Roles = "Administrator")]
+
         public String getData()
         {
-            return "hellowWorld";
+            return "hello World";
         }
 
         [HttpPost("login")]
@@ -51,7 +55,8 @@ namespace webApiV1.Controllers
                 {
                     var appUser = _userManager.Users.SingleOrDefault(r => r.Email == _user.Email);
 
-                    var token = AuthenticationHelper.GenerateJwtToken(_user.Email, appUser, _configuration);
+                    var roles = await _userManager.GetRolesAsync(appUser);
+                    var token = AuthenticationHelper.GenerateJwtToken(_user.Email, appUser, roles, _configuration);
 
                     var data = new LoginResponse(token, appUser.Id.ToString(), appUser.Email);
                     return Ok(data);
