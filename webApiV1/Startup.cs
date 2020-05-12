@@ -3,6 +3,7 @@ using AspNetCore.Identity.MongoDbCore.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Threading.Tasks;
 using webApiV1.Models.Identity;
 
 namespace webApiV1
@@ -89,7 +91,7 @@ namespace webApiV1
             services.AddControllers();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider service)
         {
             if (env.IsDevelopment())
             {
@@ -104,10 +106,64 @@ namespace webApiV1
 
             app.UseAuthorization();
 
+            creatRole(service);
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+        }
+
+        public void creatRole(IServiceProvider service)
+        {
+            var roleManager = service.GetRequiredService<RoleManager<ApplicationRole>>();
+            var userManager = service.GetRequiredService<UserManager<ApplicationUser>>();
+            System.Threading.Tasks.Task<IdentityResult> roleResult;
+            string email = "peter@hd.net.nz";
+            string roleName = "Administrator";
+
+            //Check that there is an Administrator role and create if not
+            Task<bool> hasAdminRole = roleManager.RoleExistsAsync(roleName);
+            hasAdminRole.Wait();
+
+            if (!hasAdminRole.Result)
+            {
+                roleResult = roleManager.CreateAsync(new ApplicationRole(roleName));
+                roleResult.Wait();
+            }
+
+            //Check if the admin user exists and create it if not
+            //Add to the Administrator role
+
+            Task<ApplicationUser> testUser = userManager.FindByEmailAsync(email);
+            testUser.Wait();
+
+
+            if (testUser.Result == null)
+            {
+                ApplicationUser administrator = new ApplicationUser();
+                administrator.Email = email;
+                administrator.UserName = email;
+
+                Task<IdentityResult> newUser = userManager.CreateAsync(administrator, "Abcd1234");
+                newUser.Wait();
+
+                if (newUser.Result.Succeeded)
+                {
+                    Task<IdentityResult> newUserRole = userManager.AddToRoleAsync(administrator, roleName);
+                    newUserRole.Wait();
+                }
+            }
+            else
+            {
+                Task<bool> testUserRole = userManager.IsInRoleAsync(testUser.Result, roleName);
+                testUserRole.Wait();
+                Console.WriteLine(testUserRole.Result);
+                if (!testUserRole.Result)
+                {
+                    Task<IdentityResult> addtoRolse = userManager.AddToRoleAsync(testUser.Result, roleName);
+                    addtoRolse.Wait();
+                }
+            }
         }
     }
 }

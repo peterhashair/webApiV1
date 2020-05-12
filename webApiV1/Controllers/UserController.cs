@@ -18,6 +18,7 @@ namespace webApiV1.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class UserController : ControllerBase
     {
 
@@ -33,9 +34,6 @@ namespace webApiV1.Controllers
         }
 
 
-
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [Authorize(Roles = "Admin")]
         [HttpGet]
         public String getData()
         {
