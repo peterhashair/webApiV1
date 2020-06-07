@@ -8,10 +8,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson;
+using MongoDbGenericRepository;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Threading.Tasks;
+using webApiV1.Services;
 using webApiV1.Models.Identity;
 
 namespace webApiV1
@@ -32,34 +36,15 @@ namespace webApiV1
 
             services.AddCors(options => options.AddPolicy("ApiCorsPolicy", builder =>
             {
-                builder.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader();
+                builder.WithOrigins("http://localhost:3000").AllowAnyMethod().AllowAnyHeader();
             }));
 
-            var mongoDbIdentityConfiguration = new MongoDbIdentityConfiguration
-            {
-                MongoDbSettings = new MongoDbSettings
-                {
-                    ConnectionString = Configuration.GetValue<string>("ConnectionStrings:MongoDbDatabase"),
-                    DatabaseName = Configuration.GetValue<string>("ConnectionStrings:DatabaseName")
-                },
-                IdentityOptionsAction = options =>
-                {
-                    options.Password.RequireDigit = false;
-                    options.Password.RequiredLength = 8;
-                    options.Password.RequireNonAlphanumeric = false;
-                    options.Password.RequireUppercase = false;
-                    options.Password.RequireLowercase = false;
-
-                    // Lockout settings
-                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
-                    options.Lockout.MaxFailedAccessAttempts = 10;
-
-                    // ApplicationUser settings
-                    options.User.RequireUniqueEmail = true;
-                    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@.-_";
-                }
-            };
-            services.ConfigureMongoDbIdentity<ApplicationUser, ApplicationRole, Guid>(mongoDbIdentityConfiguration);
+            var mongoDbContext = new MongoDbContext(Configuration.GetValue<string>("ConnectionStrings:MongoDbDatabase"), Configuration.GetValue<string>("ConnectionStrings:DatabaseName"));
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
+                .AddMongoDbStores<ApplicationUser, ApplicationRole, ObjectId>(mongoDbContext)
+                .AddDefaultTokenProviders();
+            // Use the mongoDbContext for other things.
+            services.AddSingleton<MongoDbContext>(mongoDbContext);
 
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear(); // => remove default claims
 
@@ -117,18 +102,22 @@ namespace webApiV1
         {
             var roleManager = service.GetRequiredService<RoleManager<ApplicationRole>>();
             var userManager = service.GetRequiredService<UserManager<ApplicationUser>>();
-            System.Threading.Tasks.Task<IdentityResult> roleResult;
             string email = "peter@hd.net.nz";
+            IEnumerable<string> roleNames = new string[] { "Administrator", "Customer", "Staff" };
             string roleName = "Administrator";
+            string password = "Pass!!word1234";
 
             //Check that there is an Administrator role and create if not
-            Task<bool> hasAdminRole = roleManager.RoleExistsAsync(roleName);
-            hasAdminRole.Wait();
 
-            if (!hasAdminRole.Result)
+            foreach (string role in roleNames)
             {
-                roleResult = roleManager.CreateAsync(new ApplicationRole(roleName));
-                roleResult.Wait();
+                Task<bool> hasAdminRole = roleManager.RoleExistsAsync(role);
+                hasAdminRole.Wait();
+                if (!hasAdminRole.Result)
+                {
+                    Task<IdentityResult> roleResult = roleManager.CreateAsync(new ApplicationRole(role));
+                    roleResult.Wait();
+                }
             }
 
             //Check if the admin user exists and create it if not
@@ -144,7 +133,7 @@ namespace webApiV1
                 administrator.Email = email;
                 administrator.UserName = email;
 
-                Task<IdentityResult> newUser = userManager.CreateAsync(administrator, "Abcd1234");
+                Task<IdentityResult> newUser = userManager.CreateAsync(administrator, password);
                 newUser.Wait();
 
                 if (newUser.Result.Succeeded)

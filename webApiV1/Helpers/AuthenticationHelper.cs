@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
@@ -24,10 +25,7 @@ namespace webApiV1.Helpers
 
             if (roles.Count > 0)
             {
-                foreach (string role in roles)
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, role));
-                }
+                claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
             }
 
 

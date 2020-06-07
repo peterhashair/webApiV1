@@ -1,10 +1,7 @@
-﻿using System;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -14,12 +11,11 @@ using webApiV1.Models.Identity;
 using webApiV1.Models.Requests;
 using webApiV1.Models.Responses;
 
-namespace webApiV1.Controllers
+namespace webApiV1.Controllers.Auth
 {
     [Route("api/v1/[controller]")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public class UserController : ControllerBase
+    public class AuthController : ControllerBase
     {
 
         private readonly UserManager<ApplicationUser> _userManager;
@@ -27,21 +23,12 @@ namespace webApiV1.Controllers
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IConfiguration _configuration;
 
-        public UserController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration)
+        public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _roleManager = roleManager;
-        }
-
-
-        [HttpGet]
-        [Authorize(Roles = "Administrator")]
-
-        public String getData()
-        {
-            return "hello World";
         }
 
         [HttpPost("login")]
@@ -63,7 +50,7 @@ namespace webApiV1.Controllers
                 }
                 return StatusCode((int)HttpStatusCode.Unauthorized, "Bad Credentials");
             }
-            string errorMessage = string.Join(", ", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+            var errorMessage = string.Join(", ", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
             return BadRequest(errorMessage ?? "Bad Request");
 
         }
@@ -84,12 +71,10 @@ namespace webApiV1.Controllers
                 }
                 return Ok(string.Join(",", result.Errors?.Select(error => error.Description)));
             }
-            string errorMessage = string.Join(", ", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
+            var errorMessage = string.Join(", ", ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage));
             return BadRequest(errorMessage ?? "Bad Request");
 
         }
-
-
 
     }
 }

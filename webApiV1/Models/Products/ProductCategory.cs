@@ -1,0 +1,24 @@
+using AspNetCore.Identity.MongoDbCore.Models;
+using MongoDbGenericRepository.Attributes;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace webApiV1.Models.Products
+{
+    [CollectionName("ProductCategory")]
+    public class ProductCategory
+    {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
+
+        [BsonElement("Name")]
+        public string Name { get; set; }
+
+        public List<ObjectId> Products { get; set; }
+    }
+}

@@ -1,4 +1,5 @@
 ﻿using System;
+using MongoDB.Bson;
 using System.ComponentModel.DataAnnotations;
 using AspNetCore.Identity.MongoDbCore.Models;
 using MongoDB.Bson.Serialization.Attributes;
@@ -7,9 +8,8 @@ using MongoDbGenericRepository.Attributes;
 namespace webApiV1.Models.Identity
 {
     [CollectionName("Users")]
-    public class ApplicationUser : MongoIdentityUser<Guid>
-	{
-
+    public class ApplicationUser : MongoIdentityUser<ObjectId>
+    {
 
         [BsonElement("FirstName")]
         [Required]
@@ -28,11 +28,11 @@ namespace webApiV1.Models.Identity
         [BsonDefaultValue(false)]
         public bool IsAcitve { get; set; }
         public ApplicationUser() : base()
-		{
-		}
+        {
+        }
 
-		public ApplicationUser(string userName, string email) : base(userName, email)
-		{
-		}
-	}
+        public ApplicationUser(string userName, string email) : base(userName, email)
+        {
+        }
+    }
 }

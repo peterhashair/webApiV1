@@ -1,4 +1,5 @@
 ﻿using AspNetCore.Identity.MongoDbCore.Models;
+using MongoDB.Bson;
 using MongoDbGenericRepository.Attributes;
 using System;
 using System.Collections.Generic;
@@ -7,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace webApiV1.Models.Identity
 {
-	[CollectionName("Roles")]
-	public class ApplicationRole : MongoIdentityRole<Guid>
-	{
-		public ApplicationRole() : base()
-		{
-		}
+    [CollectionName("Roles")]
+    public class ApplicationRole : MongoIdentityRole<ObjectId>
+    {
+        public ApplicationRole() : base()
+        {
+        }
 
-		public ApplicationRole(string roleName) : base(roleName)
-		{
-		}
-	}
+        public ApplicationRole(string roleName) : base(roleName)
+        {
+        }
+    }
 }
